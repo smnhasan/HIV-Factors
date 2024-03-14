@@ -1,0 +1,981 @@
+clear
+*directory
+cd "E:\ResearchProject\Jamal Sir\Shumi"
+
+******************************************************************************** 
+*2006
+********************************************************************************
+
+******************************************************************************** 
+*DATA MERGE 
+********************************************************************************
+
+*load 2006 MICS data
+use "Bangladesh 2006 MICS_Datasets\hh" , clear
+sort HH1 HH2
+save "hh" , replace
+
+use "Bangladesh 2006 MICS_Datasets\hl" , clear
+sort HH1 HH2 LN
+save "hl" , replace
+
+use "Bangladesh 2006 MICS_Datasets\wm" , clear
+sort HH1 HH2 LN
+save "wm" , replace
+
+merge m:1 HH1 HH2 using hh.dta
+keep if _merge == 3
+save "wm" , replace
+drop _merge
+
+
+merge m:1 HH1 HH2 LN using hl.dta
+keep if _merge == 3
+save "wm" , replace
+drop _merge
+
+********************************************************************************
+*WEIGHT, STRATA, CLUSTER VARIABLE FOR THE APPENDED DATA
+********************************************************************************
+gen wgt=wmweight
+svyset [pw=wgt],psu(HH1) strata(Stratum)
+
+********************************************************************************
+*Checking information with report Table TM.9.1:(page 147)
+********************************************************************************
+
+*Percentage who have heard of AIDS.
+svy: tab HA1
+gen heard_HIV1=HA1
+recode heard_HIV1 1=1
+recode heard_HIV1 2=2
+recode heard_HIV1 9=.
+svy: tab heard_HIV1
+label define heard_HIV1  1 "Yes" 2 "No"
+label values heard_HIV heard_HIV1
+svy: tab heard_HIV
+
+*Residence.
+svy: tab HH6
+gen area1=HH6
+recode area1 1=1
+recode area1 2/4=2
+recode area1 5=3
+label define area1  1 "Rural" 2 "Urban" 3 "Tribal"
+label values area area1
+svy: tab area
+svy: tab area heard_HIV, row
+
+*Division.
+svy: tab HH7
+svy: tab HH7 heard_HIV, row
+
+*Age 5 years.
+svy: tab wage
+svy: tab wage heard_HIV, row
+
+*Age 10 years.
+gen women_age1=wage
+recode women_age1 1/2=1
+recode women_age1 3/4=2
+recode women_age1 5/6=3
+recode women_age1 7=4
+label define women_age1  1 "15-24" 2 "25-34" 3 "35-44" 4 "44+"
+label values women_age women_age1
+svy: tab women_age
+svy: tab women_age heard_HIV, row
+
+*Education.
+svy: tab melevel
+recode melevel 9=.
+recode melevel 6=2
+svy: tab melevel
+svy: tab melevel heard_HIV, row
+
+*Current Marital STATUS.
+svy: tab MA1
+svy: tab MA1 heard_HIV, row
+
+*Weakth Status.
+svy: tab wlthind5
+svy: tab wlthind5 heard_HIV, row
+
+*Religion.
+svy: tab HC1A
+gen Religion1=HC1A
+recode Religion1 1=1
+recode Religion1 2/7=2
+recode Religion1 9=.
+label define Religion1 1 "Islam" 2 "Others"
+label values Religion Religion1
+svy: tab Religion
+svy: tab Religion heard_HIV, row
+
+*household education level.
+svy: tab helevel2
+recode helevel2 0=1
+recode helevel2 9=.
+svy: tab helevel2
+svy: tab helevel2 heard_HIV, row
+
+
+*household sex.
+svy: tab hhsex
+svy: tab hhsex heard_HIV, row
+
+*ethnicity.
+svy: tab HC1C
+gen ethnicity1=HC1C
+recode ethnicity1 1=1
+recode ethnicity1 2/7=2
+recode ethnicity1 9=.
+label define ethnicity1 1 "Bengali" 2 "Others"
+label values ethnicity ethnicity1
+svy: tab ethnicity
+svy: tab ethnicity heard_HIV, row
+
+**Checking information with report Table HA.1:(page 114).
+***Knowledge about HIV transmission, misconceptions about HIV, and comprehensive knowledge about HIV transmission (women).
+*Yes = Correct response.
+
+*Can avoid HIV by having one uninfected partner.
+svy: tab HA2
+gen uninfected_partner1=HA2
+recode uninfected_partner1 1=1
+recode uninfected_partner1 2=0
+recode uninfected_partner1 8/9=0
+recode uninfected_partner1 .=0
+label define uninfected_partner1 1 "Yes" 0 "No"
+label values uninfected_partner uninfected_partner1
+svy: tab uninfected_partner
+
+*Can get HIV from mosquito bites.
+svy: tab HA5
+gen mosquito_bites1=HA5
+recode mosquito_bites1 1=0
+recode mosquito_bites1 2=1
+recode mosquito_bites1 8/9=0
+recode mosquito_bites1 .=0
+label define mosquito_bites1 1 "Yes" 0 "No"
+label values mosquito_bites mosquito_bites1
+svy: tab mosquito_bites
+
+*Can avoid HIV by using a condom correctly every time.
+svy: tab HA4
+gen condom_correctly1=HA4
+recode condom_correctly1 1=1
+recode condom_correctly1 2=0
+recode condom_correctly1 8/9=.
+recode condom_correctly1 .=0
+label define condom_correctly1 1 "Yes" 0 "No"
+label values condom_correctly condom_correctly1
+svy: tab condom_correctly
+
+*Can get HIV by sharing food with a person who has HIV.
+svy: tab HA7
+gen sharing_food1=HA7
+recode sharing_food1 1=1
+recode sharing_food1 2=0
+recode sharing_food1 8/9=1
+recode sharing_food1 .=1
+label define sharing_food1 1 "Yes" 0 "No"
+label values sharing_food sharing_food1
+svy: tab sharing_food
+
+*Can get HIV through supernatural means.
+svy: tab HA3
+gen supernatural_means1=HA3
+recode supernatural_means1 1=0
+recode supernatural_means1 2=1
+recode supernatural_means1 8/9=0
+recode supernatural_means1 .=0
+label define supernatural_means1 1 "Yes" 0 "No"
+label values supernatural_means supernatural_means1
+svy: tab supernatural_means
+
+*Healthy-looking person may have HIV.
+svy: tab HA8
+gen Healthy_looking1=HA8
+recode Healthy_looking1 1=1
+recode Healthy_looking1 2=0
+recode Healthy_looking1 8/9=0
+recode Healthy_looking1 .=0
+label define Healthy_looking1 1 "Yes" 0 "No"
+label values Healthy_looking Healthy_looking1
+svy: tab Healthy_looking
+
+**Table HA.4: Knowledge of mother-to-child HIV transmission (women).
+
+*HIV from mother to child during pregnancy.
+svy: tab HA9A
+gen pregnancy1=HA9A
+recode pregnancy1 1=1
+recode pregnancy1 2=0
+recode pregnancy1 8/9=0
+recode pregnancy1 .=0
+label define pregnancy1 1 "Yes" 0 "No"
+label values pregnancy pregnancy1
+svy: tab pregnancy
+
+*HIV from mother to child during delivery.
+svy: tab HA9B
+gen delivery1=HA9B
+recode delivery1 1=1
+recode delivery1 2=0
+recode delivery1 8/9=0
+recode delivery1 .=0
+label define delivery1 1 "Yes" 0 "No"
+label values delivery delivery1
+svy: tab delivery
+
+*HIV from mother to child through breastfeeding.
+svy: tab HA9C
+gen breastfeeding1=HA9C
+recode breastfeeding1 1=1
+recode breastfeeding1 2=0
+recode breastfeeding1 8/9=0
+recode breastfeeding1 .=0
+label define breastfeeding1 1 "Yes" 0 "No"
+label values breastfeeding breastfeeding1
+svy: tab breastfeeding
+
+*Can get AIDS by injection with needle already used by someone.
+svy: tab HA7A
+gen needle1=HA7A
+recode needle1 1=1
+recode needle1 2=0
+recode needle1 8/9=0
+recode needle1 .=0
+label define needle1 1 "Yes" 0 "No"
+label values needle needle1
+svy: tab needle
+
+********************************************************************************
+*Inclusion and Exclusion
+********************************************************************************
+
+**Filter out Unmarried women.
+
+keep if MA1==1
+
+**Filter out who haven't heared HIV.
+keep if heard_HIV == 1
+
+*sum correct response.
+gen correct_response = uninfected_partner  + mosquito_bites + condom_correctly + sharing_food + supernatural_means + Healthy_looking + pregnancy + delivery + breastfeeding + needle
+
+*median (50%)
+sum correct_response, detail
+
+********************************************************************************
+**Scoring by median split.
+********************************************************************************
+
+generate score1=.
+replace score1=0 if correct_response<8
+replace score1=1 if correct_response>=8
+label define score1 0 "Low" 1 "High"
+label values score score1
+tab score
+
+********************************************************************************
+**Crosstab with score
+********************************************************************************
+
+*Residence.
+
+svy: tab women_age score, row
+svy: tab HH7 score, row
+svy: tab area score, row
+svy: tab melevel score, row
+svy: tab Religion score, row
+svy: tab helevel2 score, row
+svy: tab wlthind5 score, row
+svy: tab hhsex score, row
+
+
+********************************************************************************
+**Logistic regression
+********************************************************************************
+
+svy: logit score i.women_age i.HH7 i.area i.melevel i.Religion i.helevel2 i.wlthind5, or
+
+logit score i.women_age i.HH7 i.area i.melevel i.Religion i.helevel2 i.wlthind5, or
+lroc
+predict p
+roctab score p
+
+rocreg score women_age HH7 area melevel Religion helevel2 wlthind5
+
+net sj 17-4 gr0071
+net install gr0071
+net get gr0071
+ssc install moremata
+calibrationbelt
+
+estat gof
+
+estat classification
+
+lsens
+
+******************************************************************************** 
+*2012
+********************************************************************************
+
+******************************************************************************** 
+*DATA MERGE 
+********************************************************************************
+
+clear
+*load 2012 MICS data
+use "Bangladesh MICS 2012-13 SPSS Datasets\hh" , clear
+sort HH1 HH2
+save "hh" , replace
+
+use "Bangladesh MICS 2012-13 SPSS Datasets\hl" , clear
+sort HH1 HH2 HL1
+gen LN=HL1
+save "hl" , replace
+
+use "Bangladesh MICS 2012-13 SPSS Datasets\wm" , clear
+sort HH1 HH2 LN
+save "wm" , replace
+
+merge m:1 HH1 HH2 using hh.dta
+keep if _merge == 3
+save "wm" , replace
+drop _merge
+
+
+merge m:1 HH1 HH2 LN using hl.dta
+keep if _merge == 3
+save "wm" , replace
+drop _merge
+
+********************************************************************************
+*WEIGHT, STRATA, CLUSTER VARIABLE FOR THE APPENDED DATA
+********************************************************************************
+gen wgt=wmweight
+svyset [pw=wgt],psu(HH1) strata(stratum)
+
+********************************************************************************
+*Checking information with report
+********************************************************************************
+
+*Percentage who have heard of AIDS.
+svy: tab HA1
+gen heard_HIV1=HA1
+recode heard_HIV1 1=1
+recode heard_HIV1 2=2
+recode heard_HIV1 9=.
+svy: tab heard_HIV1
+label define heard_HIV1  1 "Yes" 2 "No"
+label values heard_HIV heard_HIV1
+svy: tab heard_HIV
+
+*Residence.
+svy: tab HH6
+svy: tab HH6 heard_HIV, row
+
+*Division.
+svy: tab HH7
+svy: tab HH7 heard_HIV, row
+
+*Age 5 years.
+svy: tab WAGE
+svy: tab WAGE heard_HIV, row
+
+*Age 10 years.
+gen women_age1=WAGE
+recode women_age1 1/2=1
+recode women_age1 3/4=2
+recode women_age1 5/6=3
+recode women_age1 7=4
+label define women_age1  1 "15-24" 2 "25-34" 3 "35-44" 4 "44+"
+label values women_age women_age1
+svy: tab women_age
+svy: tab women_age heard_HIV, row
+
+*Education.
+svy: tab welevel
+recode welevel 9=.
+svy: tab welevel
+svy: tab welevel heard_HIV, row
+
+*Current Marital STATUS.
+svy: tab MA1
+svy: tab MA1 heard_HIV, row
+
+*Weakth Status.
+svy: tab windex5
+svy: tab windex5 heard_HIV, row
+
+*Religion.
+svy: tab religion
+gen Religion1=religion
+recode Religion1 1=1
+recode Religion1 2/7=2
+recode Religion1 9=.
+label define Religion1 1 "Islam" 2 "Others"
+label values Religion Religion1
+svy: tab Religion
+svy: tab Religion heard_HIV, row
+
+*household education level.
+svy: tab helevel
+recode helevel 9=.
+recode helevel 3=2
+svy: tab helevel
+svy: tab helevel heard_HIV, row
+
+
+*household sex.
+svy: tab HHSEX
+svy: tab HHSEX heard_HIV, row
+
+*ethnicity.
+svy: tab ethnicity
+svy: tab ethnicity heard_HIV, row
+
+*Mass Media access.
+*Newspaper.
+svy: tab MT2
+gen Newspaper1 =MT2
+recode Newspaper1 0=0
+recode Newspaper1 1/2=1
+recode Newspaper1 3/4=0
+recode Newspaper1 9=0
+recode Newspaper1 .=0
+label define Newspaper1 1 "Yes" 0 "No"
+label values Newspaper Newspaper1
+svy: tab Newspaper heard_HIV, row
+
+*Radio.
+svy: tab MT3
+gen Radio1 =MT3
+recode Radio1 0=0
+recode Radio1 1/2=1
+recode Radio1 3/4=0
+recode Radio1 9=0
+recode Radio1 .=0
+label define Radio1 1 "Yes" 0 "No"
+label values Radio Radio1
+tab Radio
+svy: tab Radio heard_HIV, row
+
+*TV.
+svy: tab MT4
+gen TV1 =MT4
+recode TV1 0=0
+recode TV1 1/2=1
+recode TV1 3/4=0
+recode TV1 9=0
+recode TV1 .=0
+label define TV1 1 "Yes" 0 "No"
+label values TV TV1
+svy: tab TV heard_HIV, row
+
+*Mass Media.
+gen MassMedia = Newspaper + Radio + TV
+svy: tab MassMedia
+gen MM1 = MassMedia
+recode MM1 0=0
+recode MM1 1/3=1
+label define MM1 1 "Yes" 0 "No"
+label values MM MM1
+svy: tab MM heard_HIV, row
+
+
+**Checking information with report Table HA.1:(page 114).
+***Knowledge about HIV transmission, misconceptions about HIV, and comprehensive knowledge about HIV transmission (women).
+*Yes = Correct response.
+
+*Can avoid HIV by having one uninfected partner.
+svy: tab HA2
+gen uninfected_partner1=HA2
+recode uninfected_partner1 1=1
+recode uninfected_partner1 2=0
+recode uninfected_partner1 8/9=0
+recode uninfected_partner1 .=0
+label define uninfected_partner1 1 "Yes" 0 "No"
+label values uninfected_partner uninfected_partner1
+svy: tab uninfected_partner
+
+*Can get HIV from mosquito bites.
+svy: tab HA5
+gen mosquito_bites1=HA5
+recode mosquito_bites1 1=0
+recode mosquito_bites1 2=1
+recode mosquito_bites1 8/9=0
+recode mosquito_bites1 .=0
+label define mosquito_bites1 1 "Yes" 0 "No"
+label values mosquito_bites mosquito_bites1
+svy: tab mosquito_bites
+
+*Can avoid HIV by using a condom correctly every time.
+svy: tab HA4
+gen condom_correctly1=HA4
+recode condom_correctly1 1=1
+recode condom_correctly1 2=0
+recode condom_correctly1 8/9=.
+recode condom_correctly1 .=0
+label define condom_correctly1 1 "Yes" 0 "No"
+label values condom_correctly condom_correctly1
+svy: tab condom_correctly
+
+*Can get HIV by sharing food with a person who has HIV.
+svy: tab HA6
+gen sharing_food1=HA6
+recode sharing_food1 1=0
+recode sharing_food1 2=1
+recode sharing_food1 8/9=0
+recode sharing_food1 .=0
+label define sharing_food1 1 "Yes" 0 "No"
+label values sharing_food sharing_food1
+svy: tab sharing_food
+
+*Can get HIV through supernatural means.
+svy: tab HA3
+gen supernatural_means1=HA3
+recode supernatural_means1 1=0
+recode supernatural_means1 2=1
+recode supernatural_means1 8/9=0
+recode supernatural_means1 .=0
+label define supernatural_means1 1 "Yes" 0 "No"
+label values supernatural_means supernatural_means1
+svy: tab supernatural_means
+
+*Healthy-looking person may have HIV.
+svy: tab HA7
+gen Healthy_looking1=HA7
+recode Healthy_looking1 1=1
+recode Healthy_looking1 2=0
+recode Healthy_looking1 8/9=0
+recode Healthy_looking1 .=0
+label define Healthy_looking1 1 "Yes" 0 "No"
+label values Healthy_looking Healthy_looking1
+svy: tab Healthy_looking
+
+**Table HA.4: Knowledge of mother-to-child HIV transmission (women).
+
+*HIV from mother to child during pregnancy.
+svy: tab HA8A
+gen pregnancy1=HA8A
+recode pregnancy1 1=1
+recode pregnancy1 2=0
+recode pregnancy1 8/9=0
+recode pregnancy1 .=0
+label define pregnancy1 1 "Yes" 0 "No"
+label values pregnancy pregnancy1
+svy: tab pregnancy
+
+*HIV from mother to child during delivery.
+svy: tab HA8B
+gen delivery1=HA8B
+recode delivery1 1=1
+recode delivery1 2=0
+recode delivery1 8/9=0
+recode delivery1 .=0
+label define delivery1 1 "Yes" 0 "No"
+label values delivery delivery1
+svy: tab delivery
+
+*HIV from mother to child through breastfeeding.
+svy: tab HA8C
+gen breastfeeding1=HA8C
+recode breastfeeding1 1=1
+recode breastfeeding1 2=0
+recode breastfeeding1 8/9=0
+recode breastfeeding1 .=0
+label define breastfeeding1 1 "Yes" 0 "No"
+label values breastfeeding breastfeeding1
+svy: tab breastfeeding
+
+********************************************************************************
+*Inclusion and Exclusion
+********************************************************************************
+
+**Filter out Unmarried women.
+
+keep if MA1==1
+
+**Filter out who haven't heared HIV.
+keep if heard_HIV == 1
+
+*sum correct response.
+gen correct_response = uninfected_partner  + mosquito_bites + condom_correctly + sharing_food + supernatural_means + Healthy_looking + pregnancy + delivery + breastfeeding
+
+*median (50%)
+sum correct_response, detail
+
+********************************************************************************
+**Scoring by median split.
+********************************************************************************
+
+generate score1=.
+replace score1=0 if correct_response<5
+replace score1=1 if correct_response>=5
+label define score1 0 "Low" 1 "High"
+label values score score1
+tab score
+
+********************************************************************************
+**Crosstab with score
+********************************************************************************
+
+*Residence.
+svy: tab women_age score, row
+svy: tab HH7 score, row
+svy: tab HH6 score, row
+svy: tab welevel score, row
+svy: tab Religion score, row
+svy: tab MM score, row
+svy: tab helevel score, row
+svy: tab windex5 score, row
+
+
+********************************************************************************
+**Logistic regression
+********************************************************************************
+
+svy: logit score1 i.women_age i.HH7 ib2.HH6 i.welevel i.Religion i.MM  i.helevel i.windex5, or
+
+
+logit score1 i.women_age i.HH7 ib2.HH6 i.welevel i.Religion i.MM  i.helevel i.windex5, or
+lroc
+predict p
+roctab score p
+
+
+******************************************************************************** 
+*2019
+********************************************************************************
+
+******************************************************************************** 
+*DATA MERGE 
+********************************************************************************
+
+clear
+*load 2012 MICS data
+use "Bangladesh MICS6 SPSS Datasets\hh" , clear
+sort HH1 HH2
+save "hh" , replace
+
+use "Bangladesh MICS6 SPSS Datasets\hl" , clear
+sort HH1 HH2 HL1
+gen LN=HL1
+save "hl" , replace
+
+use "Bangladesh MICS6 SPSS Datasets\wm" , clear
+sort HH1 HH2 LN
+save "wm" , replace
+
+merge m:1 HH1 HH2 using hh.dta
+keep if _merge == 3
+save "wm" , replace
+drop _merge
+
+
+merge m:1 HH1 HH2 LN using hl.dta
+keep if _merge == 3
+save "wm" , replace
+drop _merge
+
+********************************************************************************
+*WEIGHT, STRATA, CLUSTER VARIABLE FOR THE APPENDED DATA
+********************************************************************************
+gen wgt=wmweight
+svyset [pw=wgt],psu(HH1) strata(stratum)
+
+********************************************************************************
+*Checking information with report Table TM.9.1:(page 147)
+********************************************************************************
+
+*Percentage who have heard of AIDS.
+svy: tab HA1
+gen heard_HIV1=HA1
+recode heard_HIV1 1=1
+recode heard_HIV1 2=2
+recode heard_HIV1 9=.
+svy: tab heard_HIV1
+label define heard_HIV1  1 "Yes" 2 "No"
+label values heard_HIV heard_HIV1
+svy: tab heard_HIV
+
+*Residence.
+svy: tab HH6
+svy: tab HH6 heard_HIV, row
+
+*Division.
+svy: tab HH7
+svy: tab HH7 heard_HIV, row
+
+*Age 5 years.
+svy: tab WAGE
+svy: tab WAGE heard_HIV, row
+
+*Age 10 years.
+gen women_age1=WAGE
+recode women_age1 1/2=1
+recode women_age1 3/4=2
+recode women_age1 5/6=3
+recode women_age1 7=4
+label define women_age1  1 "15-24" 2 "25-34" 3 "35-44" 4 "44+"
+label values women_age women_age1
+svy: tab women_age
+svy: tab women_age heard_HIV, row
+
+*Education.
+svy: tab welevel
+recode welevel 9=.
+svy: tab welevel
+svy: tab welevel heard_HIV, row
+
+*Current Marital STATUS.
+svy: tab MA1
+svy: tab MA1 heard_HIV, row
+
+*Weakth Status.
+svy: tab windex5
+svy: tab windex5 heard_HIV, row
+
+*Religion.
+svy: tab HC1A
+gen Religion1=HC1A
+recode Religion1 1=1
+recode Religion1 2/7=2
+recode Religion1 9=.
+label define Religion1 1 "Islam" 2 "Others"
+label values Religion Religion1
+svy: tab Religion
+svy: tab Religion heard_HIV, row
+
+*household education level.
+svy: tab helevel
+recode helevel 9=.
+svy: tab helevel
+svy: tab helevel heard_HIV, row
+
+
+*household sex.
+svy: tab HHSEX
+svy: tab HHSEX heard_HIV, row
+
+*ethnicity.
+svy: tab ethnicity
+svy: tab ethnicity heard_HIV, row
+
+*Mass Media access.
+*Newspaper.
+svy: tab MT1
+gen Newspaper2 = MT1
+recode Newspaper2 0/1=0
+recode Newspaper2 2/3=1
+recode Newspaper2 9=0
+recode Newspaper2 .=0
+label define Newspaper2 1 "Yes" 0 "No"
+label values Newspaper Newspaper2
+svy: tab Newspaper heard_HIV, row
+
+*Radio.
+svy: tab MT2
+gen Radio1 =MT2
+recode Radio1 0/1=0
+recode Radio1 2/3=1
+recode Radio1 9=0
+recode Radio1 .=0
+label define Radio1 1 "Yes" 0 "No"
+label values Radio Radio1
+svy: tab Radio heard_HIV, row
+
+*TV.
+svy: tab MT3
+gen TV1 =MT3
+recode TV1 0/1=0
+recode TV1 2/3=1
+recode TV1 9=0
+recode TV1 .=0
+label define TV1 1 "Yes" 0 "No"
+label values TV TV1
+svy: tab TV heard_HIV, row
+
+*Mass Media.
+gen MassMedia = Newspaper + Radio + TV
+svy: tab MassMedia
+gen MM1 = MassMedia
+recode MM1 0=0
+recode MM1 1/3=1
+label define MM1 1 "Yes" 0 "No"
+label values MM MM1
+svy: tab MM heard_HIV, row
+
+
+**Checking information with report Table HA.1:(page 114).
+***Knowledge about HIV transmission, misconceptions about HIV, and comprehensive knowledge about HIV transmission (women).
+*Yes = Correct response.
+
+*Can avoid HIV by having one uninfected partner.
+svy: tab HA2
+gen uninfected_partner1=HA2
+recode uninfected_partner1 1=1
+recode uninfected_partner1 2=0
+recode uninfected_partner1 8/9=0
+recode uninfected_partner1 .=0
+label define uninfected_partner1 1 "Yes" 0 "No"
+label values uninfected_partner uninfected_partner1
+svy: tab uninfected_partner
+
+*Can get HIV from mosquito bites.
+svy: tab HA5
+gen mosquito_bites1=HA5
+recode mosquito_bites1 1=0
+recode mosquito_bites1 2=1
+recode mosquito_bites1 8/9=0
+recode mosquito_bites1 .=0
+label define mosquito_bites1 1 "Yes" 0 "No"
+label values mosquito_bites mosquito_bites1
+svy: tab mosquito_bites
+
+*Can avoid HIV by using a condom correctly every time.
+svy: tab HA4
+gen condom_correctly1=HA4
+recode condom_correctly1 1=1
+recode condom_correctly1 2=0
+recode condom_correctly1 8/9=.
+recode condom_correctly1 .=0
+label define condom_correctly1 1 "Yes" 0 "No"
+label values condom_correctly condom_correctly1
+svy: tab condom_correctly
+
+*Can get HIV by sharing food with a person who has HIV.
+svy: tab HA6
+gen sharing_food1=HA6
+recode sharing_food1 1=0
+recode sharing_food1 2=1
+recode sharing_food1 8/9=0
+recode sharing_food1 .=0
+label define sharing_food1 1 "Yes" 0 "No"
+label values sharing_food sharing_food1
+svy: tab sharing_food
+
+*Can get HIV through supernatural means.
+svy: tab HA3
+gen supernatural_means1=HA3
+recode supernatural_means1 1=0
+recode supernatural_means1 2=1
+recode supernatural_means1 8/9=0
+recode supernatural_means1 .=0
+label define supernatural_means1 1 "Yes" 0 "No"
+label values supernatural_means supernatural_means1
+svy: tab supernatural_means
+
+*Healthy-looking person may have HIV.
+svy: tab HA7
+gen Healthy_looking1=HA7
+recode Healthy_looking1 1=1
+recode Healthy_looking1 2=0
+recode Healthy_looking1 8/9=0
+recode Healthy_looking1 .=0
+label define Healthy_looking1 1 "Yes" 0 "No"
+label values Healthy_looking Healthy_looking1
+svy: tab Healthy_looking
+
+**Table HA.4: Knowledge of mother-to-child HIV transmission (women).
+
+*HIV from mother to child during pregnancy.
+svy: tab HA8A
+gen pregnancy1=HA8A
+recode pregnancy1 1=1
+recode pregnancy1 2=0
+recode pregnancy1 8/9=0
+recode pregnancy1 .=0
+label define pregnancy1 1 "Yes" 0 "No"
+label values pregnancy pregnancy1
+svy: tab pregnancy
+
+*HIV from mother to child during delivery.
+svy: tab HA8B
+gen delivery1=HA8B
+recode delivery1 1=1
+recode delivery1 2=0
+recode delivery1 8/9=0
+recode delivery1 .=0
+label define delivery1 1 "Yes" 0 "No"
+label values delivery delivery1
+svy: tab delivery
+
+*HIV from mother to child through breastfeeding.
+svy: tab HA8C
+gen breastfeeding1=HA8C
+recode breastfeeding1 1=1
+recode breastfeeding1 2=0
+recode breastfeeding1 8/9=0
+recode breastfeeding1 .=0
+label define breastfeeding1 1 "Yes" 0 "No"
+label values breastfeeding breastfeeding1
+svy: tab breastfeeding
+
+********************************************************************************
+*Inclusion and Exclusion
+********************************************************************************
+
+**Filter out Unmarried women.
+
+keep if MA1==1
+
+**Filter out who haven't heared HIV.
+keep if heard_HIV == 1
+
+*sum correct response.
+gen correct_response = uninfected_partner  + mosquito_bites + condom_correctly + sharing_food + supernatural_means + Healthy_looking + pregnancy + delivery + breastfeeding
+
+*median (50%)
+sum correct_response, detail
+
+********************************************************************************
+**Scoring by median split.
+********************************************************************************
+
+generate score1=.
+replace score1=0 if correct_response<6
+replace score1=1 if correct_response>=6
+label define score1 0 "Low" 1 "High"
+label values score score1
+tab score
+
+********************************************************************************
+**Crosstab with score
+********************************************************************************
+svy: tab women_age score, row
+svy: tab HH7 score, row
+svy: tab HH6 score, row
+svy: tab welevel score, row
+svy: tab Religion score, row
+svy: tab MM score, row
+svy: tab helevel score, row
+svy: tab windex5 score, row
+
+
+********************************************************************************
+**Logistic regression
+********************************************************************************
+
+svy: logit score1 i.women_age i.HH7 ib2.HH6 i.welevel i.Religion i.MM i.helevel i.windex5 , or
+
+
+logit score1 i.women_age i.HH7 ib2.HH6 i.welevel i.Religion i.MM i.helevel i.windex5 , or
+lroc
+predict p
+roctab score p
+
+rocreg score women_age HH7 area melevel Religion helevel2 wlthind5
+calibrationbelt
+
+estat gof
+
+estat classification
+
+lsens
+
+
